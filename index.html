@@ -4,7 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Hello, Bootstrap Table!</title>
+    <title>Bootstrap Table!</title>
 
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="http://netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
@@ -24,7 +24,9 @@
     </style>
 </head>
 <body>
-<div id="role-toolbar"></div>
+<div id="role-toolbar">
+    <div class="btn btn-link">xx小学生二年级三班人员</div>
+</div>
 <table
         id="table"
         data-toolbar="#role-toolbar"
@@ -36,6 +38,12 @@
 
 
 <script>
+    var operateEvents = {};
+    operateEvents['click .set-effect'] = changeEffect;
+    function changeEffect(e, value, row, index){
+        console.log(e, value, row, index)
+    }
+
     $('#table').bootstrapTable({
         url: 'http://localhost:3033/tabledata',
         striped: true,                      //是否显示行间隔色
@@ -44,8 +52,68 @@
         sortable: true,                     //是否启用排序
         sidePagination: "client",           //分页方式：client客户端分页，server服务端分页（*）
         pageNumber: 1,
+        pageSize: 5, //每页的记录行数（*）
+        pageList: [5, 10, 25, 50, 100], //可供选择的每页的行数（*）
+        showRefresh: true,
+        sortName: 'id',
+        sortOrder: 'asc',
+        showColumns: true,
+        columns: [
+            {
+                checkbox: true
+            },
+            {
+                field: 'id',
+                title: 'ID',
+                sortable: true,
+                formatter: function (val) {
+                    return val == 'undefined' || !val ? '-' : val;
+                }
+            }, {
+                field: 'name',
+                title: '名称',
+                visible: false
+            }, {
+                field: 'price',
+                title: 'Item Price'
+            },
+            {
+                field: status,
+                title: '状态',
+                events: operateEvents,
+                formatter: function (value, row, index) {
+                    var edit = '<a class="icon-pencil set-effect">编辑</a>';
+                    switch (row.isEffect) {
+                        case 1:
+                            return '<label class="label label-success">生效</label>' + edit;
+                        default:
+                            return '<label class="label label-default">未生效</label>' + edit;
+                    }
+                }
+            }
+        ]
+    })
+
+    // 后端实现分页的话，搜索 功能交给后端，会在请求上带上search参数，
+    // 在queryParams 可以携带额外的参数，比如表格上方还有下拉框等等
+    $('#table').bootstrapTable({
+        url: 'http://localhost:3033/tabledata',
+        striped: true,                      //是否显示行间隔色
+        cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+        pagination: true,                   //是否显示分页（*）
+        sortable: true,                     //是否启用排序
+        sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+        pageNumber: 1,
         pageSize: 10,
         showRefresh: true,
+        ajaxOptions: {xhrFields: {withCredentials: true}},
+        // queryParams: TableObj.queryParams(this), //传递参数（*）
+        queryParams: function (params) {
+            params.executePeriod = $('#filter-execPeriod').attr('value');
+            params.creator = $('#filter-creator').attr('value');
+            params.isEffect = $('#filter-isEffect').attr('value');
+            return params;
+        },
         sortName: 'id',
         sortOrder: 'asc',
         showColumns: true,
